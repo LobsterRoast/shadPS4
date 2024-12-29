@@ -74,7 +74,7 @@ Check the build instructions for [**macOS**](https://github.com/shadps4-emu/shad
 
 For more information on how to test, debug and report issues with the emulator or games, read the [**Debugging documentation**](https://github.com/shadps4-emu/shadPS4/blob/main/documents/Debugging/Debugging.md).
 
-# Keyboard mapping
+# Keyboard/Mouse mapping
 
 | Button | Function |
 |-------------|-------------|
@@ -92,7 +92,6 @@ LEFT AXIS UP | W | |
 LEFT AXIS DOWN | S | |
 LEFT AXIS LEFT | A | |
 LEFT AXIS RIGHT | D | |
-RIGHT THUMBSTICK | MOUSE MOTION | |
 TRIANGLE | R | C |
 CIRCLE | SPACE | B |
 CROSS | E | N |
@@ -103,12 +102,17 @@ PAD LEFT | LEFT | |
 PAD RIGHT | RIGHT | |
 OPTIONS | RETURN | |
 BACK BUTTON / TOUCH PAD | Q | |
-L1 | RIGHT CLICK | |
-R1 | LEFT CLICK | |
-L2 | MOUSE BUTTON 4 | |
-R2 | MOUSE BUTTON 5 | |
 L3 | X | |
-R3 | SCROLL WHEEL CLICK | |
+
+| Controller button | Mouse equivelant |
+|-------------|-------------|
+RIGHT THUMBSTICK | MOUSE MOTION | 
+L1 | RIGHT CLICK |
+R1 | LEFT CLICK |
+L2 | MOUSE BUTTON 4 |
+R2 | MOUSE BUTTON 5 |
+R3 | SCROLL WHEEL CLICK |
+
 (Sorry if you don't have side buttons on your mouse; see sdl_window.cpp in the source code to edit)
 # Main team
 
