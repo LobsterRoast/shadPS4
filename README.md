@@ -96,23 +96,23 @@ RIGHT AXIS UP | I | |
 RIGHT AXIS DOWN | K | |
 RIGHT AXIS LEFT | J | |
 RIGHT AXIS RIGHT | L | |
-TRIANGLE | Numpad 8 | C |
-CIRCLE | Numpad 6 | B |
-CROSS | Numpad 2 | N |
-SQUARE | Numpad 4 | V |
+TRIANGLE | R | C |
+CIRCLE | SPACE | B |
+CROSS | E | N |
+SQUARE | F | V |
 PAD UP | UP | |
 PAD DOWN | DOWN | |
 PAD LEFT | LEFT | |
 PAD RIGHT | RIGHT | |
 OPTIONS | RETURN | |
-BACK BUTTON / TOUCH PAD | SPACE | |
-L1 | Q | |
-R1 | U | |
-L2 | E | |
-R2 | O | |
+BACK BUTTON / TOUCH PAD | Q | |
+L1 | RIGHT CLICK | |
+R1 | LEFT CLICK | |
+L2 | MOUSE BUTTON 4 | |
+R2 | MOUSE BUTTON 5 | |
 L3 | X | |
-R3 | M | |
-
+R3 | SCROLL WHEEL CLICK | |
+(Sorry if you don't have side buttons on your mouse; see sdl_window.cpp in the source code to edit)
 # Main team
 
 - [**georgemoralis**](https://github.com/georgemoralis)
