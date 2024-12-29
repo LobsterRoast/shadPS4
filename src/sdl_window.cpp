@@ -21,6 +21,8 @@
 #include <SDL3/SDL_metal.h>
 #endif
 
+#define SIGN(x) ((x > 0) - (x < 0))
+
 namespace Frontend {
 
 using namespace Libraries::Pad;
@@ -136,7 +138,7 @@ void WindowSDL::WaitEvent() {
     if (ImGui::Core::ProcessEvent(&event)) {
         return;
     }
-
+    PollMouseMotion(&event);
     switch (event.type) {
     case SDL_EVENT_WINDOW_RESIZED:
     case SDL_EVENT_WINDOW_MAXIMIZED:
@@ -172,7 +174,6 @@ void WindowSDL::WaitEvent() {
     default:
         break;
     }
-    PollMouseMotion(&event);
 }
 
 void WindowSDL::InitTimers() {
@@ -417,15 +418,16 @@ void WindowSDL::PollMouseMotion(const SDL_Event* event) {
     Input::Axis axis = Input::Axis::AxisMax;
     int axisvalue = 0;
     int ax = 0;
-    if (event->type == SDL_EVENT_MOUSE_MOTION) {
-        ax = Input::GetAxis(-0x80, 0x80, event->motion.xrel*10);
+    static int deadzones = 20;
+    if ((event->type | SDL_EVENT_MOUSE_MOTION) != 0) {
+        ax = Input::GetAxis(-0x80, 0x80, event->motion.xrel*12+deadzones*SIGN(event->motion.xrel));
         controller->Axis(0, Input::Axis::RightX, ax);
-        ax = Input::GetAxis(-0x80, 0x80, event->motion.yrel*10);
+        ax = Input::GetAxis(-0x80, 0x80, event->motion.yrel*12+deadzones*SIGN(event->motion.yrel));
         controller->Axis(0, Input::Axis::RightY, ax);
     }
     else {
-        controller->Axis(0, Input::Axis::RightX, ax);
-        controller->Axis(0, Input::Axis::RightY, ax);
+        controller->Axis(0, Input::Axis::RightX, 0);
+        controller->Axis(0, Input::Axis::RightY, 0);
     }
 }
 void WindowSDL::OnGamepadEvent(const SDL_Event* event) {
