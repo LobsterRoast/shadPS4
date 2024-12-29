@@ -416,21 +416,30 @@ void WindowSDL::OnKeyPress(const SDL_Event* event) {
 }
 void WindowSDL::PollMouseMotion(const SDL_Event* event) {
     Input::Axis axis = Input::Axis::AxisMax;
-    static int deadzones = 32;
+    static int deadzones = 40;
     static int sensitivity = 8;
     int axisvalue = 0;
     int ax = 0;
-    if ((event->type | SDL_EVENT_MOUSE_MOTION) != 0) {
-        axisvalue = event->motion.xrel*sensitivity+deadzones*SIGN(event->motion.xrel);
+    if ((event->type & SDL_EVENT_MOUSE_MOTION) != 0) {
+        int x = event->motion.xrel * sensitivity, y = event->motion.yrel * sensitivity;
+        // find the magnitude of the mouse delta so we can find a normalized vector to multiply
+        // by the deadzone size
+        float magnitude = sqrtf(pow(x, 2) + pow(y, 2));
+        int deadzone_offset_x = static_cast<int>(roundf((x/magnitude)*deadzones));
+        int deadzone_offset_y = static_cast<int>(roundf((y/magnitude)*deadzones));
+        float adjusted_magnitude = magnitude/128*(128-deadzones);
+        x = static_cast<int>(roundf((x/magnitude)*adjusted_magnitude)) + deadzone_offset_x;
+        y = static_cast<int>(roundf((y/magnitude)*adjusted_magnitude)) + deadzone_offset_y;
+        axisvalue = x;
         ax = Input::GetAxis(-0x80, 0x80, axisvalue);
         controller->Axis(0, Input::Axis::RightX, ax);
-        axisvalue = event->motion.yrel*sensitivity+deadzones*SIGN(event->motion.yrel);
+        axisvalue = y;
         ax = Input::GetAxis(-0x80, 0x80, axisvalue);
         controller->Axis(0, Input::Axis::RightY, ax);
     }
     else {
-        controller->Axis(0, Input::Axis::RightX, 0);
-        controller->Axis(0, Input::Axis::RightY, 0);
+        controller->Axis(0, Input::Axis::RightX, 128);
+        controller->Axis(0, Input::Axis::RightY, 128);
     }
 }
 void WindowSDL::OnGamepadEvent(const SDL_Event* event) {
