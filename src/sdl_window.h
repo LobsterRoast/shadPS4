@@ -78,6 +78,7 @@ private:
     void OnResize();
     void OnKeyPress(const SDL_Event* event);
     void OnMousePress(const SDL_Event* event);
+    void PollMouseMotion(const SDL_Event* event);
     void OnGamepadEvent(const SDL_Event* event);
 
 private:

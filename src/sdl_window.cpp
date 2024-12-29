@@ -7,6 +7,7 @@
 #include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
+#include <algorithm>
 
 #include "common/assert.h"
 #include "common/config.h"
@@ -93,6 +94,7 @@ WindowSDL::WindowSDL(s32 width_, s32 height_, Input::GameController* controller_
     }
 
     SDL_SetWindowFullscreen(window, Config::isFullscreenMode());
+    SDL_SetWindowRelativeMouseMode(window, true);
 
     SDL_InitSubSystem(SDL_INIT_GAMEPAD);
     controller->TryOpenSDLController();
@@ -170,6 +172,7 @@ void WindowSDL::WaitEvent() {
     default:
         break;
     }
+    PollMouseMotion(&event);
 }
 
 void WindowSDL::InitTimers() {
@@ -410,7 +413,21 @@ void WindowSDL::OnKeyPress(const SDL_Event* event) {
         controller->Axis(0, axis, ax);
     }
 }
-
+void WindowSDL::PollMouseMotion(const SDL_Event* event) {
+    Input::Axis axis = Input::Axis::AxisMax;
+    int axisvalue = 0;
+    int ax = 0;
+    if (event->type == SDL_EVENT_MOUSE_MOTION) {
+        ax = Input::GetAxis(-0x80, 0x80, event->motion.xrel*10);
+        controller->Axis(0, Input::Axis::RightX, ax);
+        ax = Input::GetAxis(-0x80, 0x80, event->motion.yrel*10);
+        controller->Axis(0, Input::Axis::RightY, ax);
+    }
+    else {
+        controller->Axis(0, Input::Axis::RightX, ax);
+        controller->Axis(0, Input::Axis::RightY, ax);
+    }
+}
 void WindowSDL::OnGamepadEvent(const SDL_Event* event) {
     auto button = OrbisPadButtonDataOffset::None;
     Input::Axis axis = Input::Axis::AxisMax;
