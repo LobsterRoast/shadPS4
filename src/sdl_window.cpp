@@ -416,13 +416,16 @@ void WindowSDL::OnKeyPress(const SDL_Event* event) {
 }
 void WindowSDL::PollMouseMotion(const SDL_Event* event) {
     Input::Axis axis = Input::Axis::AxisMax;
+    static int deadzones = 32;
+    static int sensitivity = 8;
     int axisvalue = 0;
     int ax = 0;
-    static int deadzones = 20;
     if ((event->type | SDL_EVENT_MOUSE_MOTION) != 0) {
-        ax = Input::GetAxis(-0x80, 0x80, event->motion.xrel*12+deadzones*SIGN(event->motion.xrel));
+        axisvalue = event->motion.xrel*sensitivity+deadzones*SIGN(event->motion.xrel);
+        ax = Input::GetAxis(-0x80, 0x80, axisvalue);
         controller->Axis(0, Input::Axis::RightX, ax);
-        ax = Input::GetAxis(-0x80, 0x80, event->motion.yrel*12+deadzones*SIGN(event->motion.yrel));
+        axisvalue = event->motion.yrel*sensitivity+deadzones*SIGN(event->motion.yrel);
+        ax = Input::GetAxis(-0x80, 0x80, axisvalue);
         controller->Axis(0, Input::Axis::RightY, ax);
     }
     else {
