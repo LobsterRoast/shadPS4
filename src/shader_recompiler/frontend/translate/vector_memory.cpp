@@ -144,8 +144,10 @@ void Translator::EmitVectorMemory(const GcnInst& inst) {
         return IMAGE_SAMPLE(inst);
 
         // Image gather operations
+    case Opcode::IMAGE_GATHER4:
     case Opcode::IMAGE_GATHER4_LZ:
     case Opcode::IMAGE_GATHER4_C:
+    case Opcode::IMAGE_GATHER4_O:
     case Opcode::IMAGE_GATHER4_C_O:
     case Opcode::IMAGE_GATHER4_C_LZ:
     case Opcode::IMAGE_GATHER4_LZ_O:
@@ -251,10 +253,6 @@ void Translator::BUFFER_STORE(u32 num_dwords, bool is_typed, const GcnInst& inst
     if (info.stage != Stage::Export && info.stage != Stage::Hull && info.stage != Stage::Geometry) {
         ASSERT_MSG(soffset.IsImmediate() && soffset.U32() == 0,
                    "Non immediate offset not supported");
-    }
-
-    if (info.stage == Stage::Hull) {
-        // printf("here\n"); // break
     }
 
     IR::Value address = [&] -> IR::Value {
