@@ -54,18 +54,10 @@ BufferCache::BufferCache(const Vulkan::Instance& instance_, Vulkan::Scheduler& s
 BufferCache::~BufferCache() = default;
 
 void BufferCache::InvalidateMemory(VAddr device_addr, u64 size) {
-    std::scoped_lock lk{mutex};
     const bool is_tracked = IsRegionRegistered(device_addr, size);
-    if (!is_tracked) {
-        return;
-    }
-    // Mark the page as CPU modified to stop tracking writes.
-    SCOPE_EXIT {
+    if (is_tracked) {
+        // Mark the page as CPU modified to stop tracking writes.
         memory_tracker.MarkRegionAsCpuModified(device_addr, size);
-    };
-    if (!memory_tracker.IsRegionGpuModified(device_addr, size)) {
-        // Page has not been modified by the GPU, nothing to do.
-        return;
     }
 }
 
@@ -234,46 +226,22 @@ bool BufferCache::BindVertexBuffers(
     return has_step_rate;
 }
 
-u32 BufferCache::BindIndexBuffer(bool& is_indexed, u32 index_offset) {
-    // Emulate QuadList and Polygon primitive types with CPU made index buffer.
+void BufferCache::BindIndexBuffer(u32 index_offset) {
     const auto& regs = liverpool->regs;
-    if (!is_indexed) {
-        if (regs.primitive_type != AmdGpu::PrimitiveType::Polygon) {
-            return regs.num_indices;
-        }
-
-        // Emit indices.
-        const u32 index_size = 3 * regs.num_indices;
-        const auto [data, offset] = stream_buffer.Map(index_size);
-        Vulkan::LiverpoolToVK::EmitPolygonToTriangleListIndices(data, regs.num_indices);
-        stream_buffer.Commit();
-
-        // Bind index buffer.
-        is_indexed = true;
-
-        const auto cmdbuf = scheduler.CommandBuffer();
-        cmdbuf.bindIndexBuffer(stream_buffer.Handle(), offset, vk::IndexType::eUint16);
-        return index_size / sizeof(u16);
-    }
 
     // Figure out index type and size.
     const bool is_index16 =
         regs.index_buffer_type.index_type == AmdGpu::Liverpool::IndexType::Index16;
     const vk::IndexType index_type = is_index16 ? vk::IndexType::eUint16 : vk::IndexType::eUint32;
     const u32 index_size = is_index16 ? sizeof(u16) : sizeof(u32);
-    VAddr index_address = regs.index_base_address.Address<VAddr>();
-    index_address += index_offset * index_size;
-
-    if (regs.primitive_type == AmdGpu::PrimitiveType::Polygon) {
-        UNREACHABLE();
-    }
+    const VAddr index_address =
+        regs.index_base_address.Address<VAddr>() + index_offset * index_size;
 
     // Bind index buffer.
     const u32 index_buffer_size = regs.num_indices * index_size;
     const auto [vk_buffer, offset] = ObtainBuffer(index_address, index_buffer_size, false);
     const auto cmdbuf = scheduler.CommandBuffer();
     cmdbuf.bindIndexBuffer(vk_buffer->Handle(), offset, index_type);
-    return regs.num_indices;
 }
 
 void BufferCache::InlineData(VAddr address, const void* value, u32 num_bytes, bool is_gds) {
@@ -370,6 +338,7 @@ bool BufferCache::IsRegionRegistered(VAddr addr, size_t size) {
             ++page;
             continue;
         }
+        std::shared_lock lk{mutex};
         Buffer& buffer = slot_buffers[buffer_id];
         const VAddr buf_start_addr = buffer.CpuAddr();
         const VAddr buf_end_addr = buf_start_addr + buffer.SizeBytes();
@@ -520,8 +489,11 @@ BufferId BufferCache::CreateBuffer(VAddr device_addr, u32 wanted_size) {
     wanted_size = static_cast<u32>(device_addr_end - device_addr);
     const OverlapResult overlap = ResolveOverlaps(device_addr, wanted_size);
     const u32 size = static_cast<u32>(overlap.end - overlap.begin);
-    const BufferId new_buffer_id = slot_buffers.insert(
-        instance, scheduler, MemoryUsage::DeviceLocal, overlap.begin, AllFlags, size);
+    const BufferId new_buffer_id = [&] {
+        std::scoped_lock lk{mutex};
+        return slot_buffers.insert(instance, scheduler, MemoryUsage::DeviceLocal, overlap.begin,
+                                   AllFlags, size);
+    }();
     auto& new_buffer = slot_buffers[new_buffer_id];
     const size_t size_bytes = new_buffer.SizeBytes();
     const auto cmdbuf = scheduler.CommandBuffer();
@@ -561,10 +533,8 @@ void BufferCache::ChangeRegister(BufferId buffer_id) {
 
 void BufferCache::SynchronizeBuffer(Buffer& buffer, VAddr device_addr, u32 size,
                                     bool is_texel_buffer) {
-    std::scoped_lock lk{mutex};
     boost::container::small_vector<vk::BufferCopy, 4> copies;
     u64 total_size_bytes = 0;
-    u64 largest_copy = 0;
     VAddr buffer_start = buffer.CpuAddr();
     memory_tracker.ForEachUploadRange(device_addr, size, [&](u64 device_addr_out, u64 range_size) {
         copies.push_back(vk::BufferCopy{
@@ -573,7 +543,6 @@ void BufferCache::SynchronizeBuffer(Buffer& buffer, VAddr device_addr, u32 size,
             .size = range_size,
         });
         total_size_bytes += range_size;
-        largest_copy = std::max(largest_copy, range_size);
     });
     SCOPE_EXIT {
         if (is_texel_buffer) {

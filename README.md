@@ -122,6 +122,11 @@ R3 | SCROLL WHEEL CLICK |
 - [**skmp**](https://github.com/skmp)
 - [**wheremyfoodat**](https://github.com/wheremyfoodat)
 - [**raziel1000**](https://github.com/raziel1000)
+- [**viniciuslrangel**](https://github.com/viniciuslrangel)
+- [**roamic**](https://github.com/vladmikhalin)
+- [**poly**](https://github.com/polybiusproxy)
+- [**squidbus**](https://github.com/squidbus)
+- [**frodo**](https://github.com/baggins183)
 
 Logo is done by [**Xphalnos**](https://github.com/Xphalnos)
 
