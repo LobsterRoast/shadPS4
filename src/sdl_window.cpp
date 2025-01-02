@@ -416,8 +416,8 @@ void WindowSDL::OnKeyPress(const SDL_Event* event) {
 }
 void WindowSDL::PollMouseMotion(const SDL_Event* event) {
     Input::Axis axis = Input::Axis::AxisMax;
-    static int deadzones = 40;
-    static int sensitivity = 8;
+    static int deadzones = 35;
+    static int sensitivity = 10;
     int axisvalue = 0;
     int ax = 0;
     if ((event->type & SDL_EVENT_MOUSE_MOTION) != 0) {
